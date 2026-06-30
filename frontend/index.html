@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Software Project Management Tool — CSE181600E11</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f5f5; --surface: #ffffff; --surface2: #f0f0f0;
+    --border: #e0e0e0; --text: #1a1a1a; --text2: #666;
+    --blue: #185FA5; --blue-light: #E6F1FB; --blue-text: #0C447C;
+    --green: #3B6D11; --green-light: #EAF3DE; --green-text: #27500A;
+    --amber: #854F0B; --amber-light: #FAEEDA; --amber-text: #633806;
+    --red: #A32D2D; --red-light: #FCEBEB; --red-text: #791F1F;
+    --purple: #534AB7; --purple-light: #EEEDFE; --purple-text: #3C3489;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 210px; min-width: 210px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 0; }
+  .sidebar-header { padding: 1.25rem 1rem; border-bottom: 1px solid var(--border); }
+  .sidebar-header .app-name { font-size: 13px; font-weight: 600; color: var(--blue); letter-spacing: 0.03em; }
+  .sidebar-header .app-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .sidebar-nav { padding: 0.75rem 0.5rem; flex: 1; }
+  .nav-section { font-size: 10px; font-weight: 600; color: var(--text2); letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 0.5rem 0.25rem; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: var(--radius); font-size: 13px; cursor: pointer; color: var(--text2); transition: all 0.15s; margin-bottom: 2px; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--blue-light); color: var(--blue-text); font-weight: 500; }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: auto; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.875rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+  .topbar-left h1 { font-size: 16px; font-weight: 600; }
+  .topbar-left .breadcrumb { font-size: 11px; color: var(--text2); margin-bottom: 2px; }
+  .badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+  .badge-blue { background: var(--blue-light); color: var(--blue-text); }
+  .badge-green { background: var(--green-light); color: var(--green-text); }
+  .badge-amber { background: var(--amber-light); color: var(--amber-text); }
+  .badge-red { background: var(--red-light); color: var(--red-text); }
+  .badge-purple { background: var(--purple-light); color: var(--purple-text); }
+  .content { padding: 1.5rem; flex: 1; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Cards & Grids */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+  .metric-label { font-size: 11px; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .metric-val { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
+  .metric-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  /* Section headings */
+  .section-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .section-hd h2 { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* Kanban */
+  .kanban-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .kanban-col { background: var(--surface2); border-radius: var(--radius-lg); padding: 10px; min-height: 200px; }
+  .kanban-col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 0 2px; }
+  .kanban-col-title { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .kanban-count { font-size: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 1px 7px; color: var(--text2); }
+  .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; margin-bottom: 6px; cursor: pointer; transition: border-color 0.15s; }
+  .task-card:hover { border-color: #aaa; }
+  .task-card-title { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 6px; line-height: 1.4; }
+  .task-card-meta { display: flex; align-items: center; justify-content: space-between; }
+  .mod-badge { font-size: 10px; padding: 2px 6px; border-radius: 20px; font-weight: 500; }
+  .avatar-xs { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; }
+
+  /* Progress bars */
+  .progress-bar-bg { height: 6px; background: var(--surface2); border-radius: 20px; overflow: hidden; margin-top: 4px; }
+  .progress-bar-fill { height: 100%; border-radius: 20px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.04em; background: var(--surface2); }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+
+  /* Tabs */
+  .tab-bar { display: flex; gap: 4px; margin-bottom: 1rem; background: var(--surface2); padding: 4px; border-radius: var(--radius); width: fit-content; }
+  .tab { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--text2); border: none; background: none; transition: all 0.15s; }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  /* COCOMO */
+  .cocomo-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 12px 0; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 12px; font-weight: 500; color: var(--text2); }
+  .form-group input, .form-group select { padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; background: var(--surface2); color: var(--text); width: 100%; }
+  .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--blue); background: var(--surface); }
+  .cocomo-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .cres { background: var(--surface2); border-radius: var(--radius); padding: 10px 14px; text-align: center; }
+  .cres-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .cres-val { font-size: 20px; font-weight: 600; color: var(--text); }
+  .cres-unit { font-size: 11px; color: var(--text2); }
+  .formula-note { font-size: 11px; color: var(--text2); margin-top: 10px; padding: 8px 12px; background: var(--surface2); border-radius: var(--radius); border-left: 3px solid var(--blue); }
+
+  /* Testing */
+  .test-pass { color: var(--green); font-weight: 500; }
+  .test-fail { color: var(--red); font-weight: 500; }
+  .test-pending { color: var(--amber); font-weight: 500; }
+
+  /* Activity */
+  .activity-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .activity-text { flex: 1; color: var(--text); }
+  .activity-time { color: var(--text2); font-size: 11px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: all 0.15s; }
+  .btn:hover { background: var(--surface2); }
+  .btn-primary { background: var(--blue); color: white; border-color: var(--blue); }
+  .btn-primary:hover { background: var(--blue-text); border-color: var(--blue-text); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius-lg); padding: 1.5rem; width: 420px; max-width: 90vw; }
+  .modal h2 { font-size: 16px; font-weight: 600; margin-bottom: 1rem; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .kanban-grid { grid-template-columns: 1fr; }
+    .cocomo-inputs { grid-template-columns: 1fr; }
+  }
+
+  /* Login screen */
+  .login-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 200; }
+  .login-overlay.hidden { display: none; }
+  .login-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2rem; width: 360px; max-width: 90vw; }
+  .login-box h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .login-box .login-sub { font-size: 12px; color: var(--text2); margin-bottom: 1.25rem; }
+  .login-box .form-group { margin-bottom: 10px; }
+  .login-tabs { display: flex; gap: 4px; margin-bottom: 1rem; background: var(--surface2); padding: 4px; border-radius: var(--radius); }
+  .login-tabs .tab { flex: 1; text-align: center; }
+  .login-error { font-size: 12px; color: var(--red); margin-top: 8px; min-height: 16px; }
+  .login-actions { margin-top: 4px; }
+  .login-actions .btn { width: 100%; justify-content: center; }
+  .app.hidden { display: none; }
+
+  /* Misc app states */
+  .topbar-user { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 10px; }
+  .loading-text, .error-text { font-size: 12px; color: var(--text2); padding: 8px 0; }
+  .error-text { color: var(--red); }
+</style>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     Firebase module script — runs deferred (ES module).
+     Sets window.__APP_CONFIG__, window.__fbAuth__, window.__fbAuthFns__
+     then dispatches 'appConfigReady' so the main script can start.
+════════════════════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import {
+    getAuth, setPersistence, browserLocalPersistence,
+    signInWithEmailAndPassword, createUserWithEmailAndPassword,
+    onAuthStateChanged, signOut
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyB424jts5lCU02UiDX3ZzDEZSwZGyGJFqw",
+    authDomain:        "softwareprojectmanagemen-5a210.firebaseapp.com",
+    projectId:         "softwareprojectmanagemen-5a210",
+    storageBucket:     "softwareprojectmanagemen-5a210.firebasestorage.app",
+    messagingSenderId: "967502681245",
+    appId:             "1:967502681245:web:01978cc3e653fe4867b074"
+  };
+
+  const API_BASE   = "http://localhost:3000/api";
+  const PROJECT_ID = "main";
+
+  const fbApp  = initializeApp(firebaseConfig);
+  const fbAuth = getAuth(fbApp);
+  await setPersistence(fbAuth, browserLocalPersistence);
+
+  // Expose to non-module script
+  window.__APP_CONFIG__ = { API_BASE, PROJECT_ID };
+  window.__fbAuth__     = fbAuth;
+  window.__fbAuthFns__  = {
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+  };
+
+  // ← KEY FIX: signal that config is ready before the main script runs
+  window.dispatchEvent(new Event('appConfigReady'));
+</script>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h1>SE Project Tool</h1>
+    <div class="login-sub">Sign in to continue · CSE181600E11</div>
+    <div class="login-tabs">
+      <button class="tab active" id="tabSignin" onclick="setAuthMode('signin')">Sign In</button>
+      <button class="tab" id="tabSignup" onclick="setAuthMode('signup')">Sign Up</button>
+    </div>
+    <div class="form-group" id="groupName" style="display:none;">
+      <label>Display Name</label>
+      <input type="text" id="auth-name" placeholder="e.g. Ranil">
+    </div>
+    <div class="form-group" id="groupRoll" style="display:none;">
+      <label>Roll Number</label>
+      <input type="text" id="auth-roll" placeholder="e.g. 230710007045">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="auth-email" placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="auth-password" placeholder="••••••••">
+    </div>
+    <div class="login-actions">
+      <button class="btn btn-primary" id="authSubmitBtn" onclick="submitAuth()">Sign In</button>
+    </div>
+    <div class="login-error" id="authError"></div>
+  </div>
+</div>
+
+<div class="app hidden" id="appRoot">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <div class="app-name">SE Project Tool</div>
+      <div class="app-sub">CSE181600E11 · 6th Semester</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="showPage('dashboard', this)">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('kanban', this)">
+        <span class="nav-icon">🗂️</span> Kanban Board
+      </div>
+      <div class="nav-section" style="margin-top:8px;">Modules</div>
+      <div class="nav-item" onclick="showPage('requirements', this)">
+        <span class="nav-icon">📋</span> Requirements
+      </div>
+      <div class="nav-item" onclick="showPage('design', this)">
+        <span class="nav-icon">🏗️</span> Design & Architecture
+      </div>
+      <div class="nav-item" onclick="showPage('cocomo', this)">
+        <span class="nav-icon">🧮</span> Cost Estimator
+      </div>
+      <div class="nav-item" onclick="showPage('testing', this)">
+        <span class="nav-icon">🧪</span> Testing & QA
+      </div>
+      <div class="nav-section" style="margin-top:8px;">Team</div>
+      <div class="nav-item" onclick="showPage('team', this)">
+        <span class="nav-icon">👥</span> Team Members
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="breadcrumb">Software Engineering · CSE181600E11 · 3-0-0 · Credits: 3</div>
+        <h1>Software Project Management Tool</h1>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="badge badge-amber" id="connStatus">Connecting…</span>
+        <span class="topbar-user" id="topbarUser"></span>
+        <button class="btn btn-sm" onclick="document.getElementById('addTaskModal').classList.add('open')">+ Add Task</button>
+        <button class="btn btn-sm" onclick="logout()">Log Out</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- =================== DASHBOARD =================== -->
+      <div class="page active" id="page-dashboard">
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Total Tasks</div>
+            <div class="metric-val" id="m-total">16</div>
+            <div class="metric-sub">across all modules</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Completed</div>
+            <div class="metric-val" id="m-done" style="color:var(--green);">5</div>
+            <div class="metric-sub" id="m-pct">31% done</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Est. Effort</div>
+            <div class="metric-val" id="m-effort">14.2</div>
+            <div class="metric-sub">person-months (COCOMO)</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Days to Deadline</div>
+            <div class="metric-val" id="m-days">—</div>
+            <div class="metric-sub">before end-sem exams</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;">
+          <div class="card">
+            <div class="section-hd"><h2>Module Progress</h2></div>
+            <div id="module-progress"></div>
+          </div>
+          <div class="card">
+            <div class="section-hd"><h2>Recent Activity</h2></div>
+            <div id="activity-feed"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-hd"><h2>SDLC Model — Incremental & Prototyping (Module 1)</h2></div>
+          <div style="display:flex;gap:0;margin-top:8px;">
+            <div style="flex:1;text-align:center;padding:10px 6px;background:var(--blue-light);border-radius:8px 0 0 8px;border:1px solid #B5D4F4;">
+              <div style="font-size:10px;font-weight:600;color:var(--blue-text);text-transform:uppercase;">Planning</div>
+              <div style="font-size:11px;color:var(--blue-text);margin-top:2px;">✓ Done</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:10px 6px;background:var(--green-light);border:1px solid #C0DD97;border-left:none;">
+              <div style="font-size:10px;font-weight:600;color:var(--green-text);text-transform:uppercase;">Requirements</div>
+              <div style="font-size:11px;color:var(--green-text);margin-top:2px;">✓ Done</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:10px 6px;background:var(--amber-light);border:1px solid #FAC775;border-left:none;">
+              <div style="font-size:10px;font-weight:600;color:var(--amber-text);text-transform:uppercase;">Design</div>
+              <div style="font-size:11px;color:var(--amber-text);margin-top:2px;">⟳ Active</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:10px 6px;background:var(--surface2);border:1px solid var(--border);border-left:none;">
+              <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;">Coding</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:2px;">Pending</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:10px 6px;background:var(--surface2);border:1px solid var(--border);border-left:none;">
+              <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;">Testing</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:2px;">Pending</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:10px 6px;background:var(--surface2);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;">
+              <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;">Delivery</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:2px;">Pending</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== KANBAN =================== -->
+      <div class="page" id="page-kanban">
+        <div class="kanban-grid" id="kanban-board"></div>
+      </div>
+
+      <!-- =================== REQUIREMENTS =================== -->
+      <div class="page" id="page-requirements">
+        <div class="tab-bar">
+          <button class="tab active" onclick="showReqTab('functional', this)">Functional Requirements</button>
+          <button class="tab" onclick="showReqTab('nonfunctional', this)">Non-Functional Requirements</button>
+          <button class="tab" onclick="showReqTab('feasibility', this)">Feasibility Study</button>
+        </div>
+        <div style="margin-bottom:8px;text-align:right;">
+          <button class="btn btn-sm" onclick="openAddRequirement()">+ Add Requirement</button>
+        </div>
+        <div id="req-functional">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Req ID</th><th>Requirement</th><th>Priority</th><th>Status</th><th></th></tr></thead>
+              <tbody id="tbody-functional">
+                <tr><td colspan="5" class="loading-text">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div id="req-nonfunctional" style="display:none;">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Req ID</th><th>Requirement</th><th>Priority</th><th>Status</th><th></th></tr></thead>
+              <tbody id="tbody-nonfunctional">
+                <tr><td colspan="5" class="loading-text">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div id="req-feasibility" style="display:none;">
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;">Feasibility Study Summary</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+              <div style="background:var(--green-light);border-radius:var(--radius);padding:12px;">
+                <div style="font-size:11px;font-weight:600;color:var(--green-text);text-transform:uppercase;margin-bottom:6px;">Technical Feasibility</div>
+                <div style="font-size:12px;color:var(--green-text);">Standard web technologies (HTML/CSS/JS or React). No specialized hardware required. All tools are free and open-source.</div>
+                <div style="margin-top:8px;"><span class="badge badge-green">Feasible</span></div>
+              </div>
+              <div style="background:var(--blue-light);border-radius:var(--radius);padding:12px;">
+                <div style="font-size:11px;font-weight:600;color:var(--blue-text);text-transform:uppercase;margin-bottom:6px;">Economic Feasibility</div>
+                <div style="font-size:12px;color:var(--blue-text);">Zero cost — uses free tools (VS Code, GitHub, Firebase free tier). COCOMO estimate: ~14 person-months for full system.</div>
+                <div style="margin-top:8px;"><span class="badge badge-blue">Feasible</span></div>
+              </div>
+              <div style="background:var(--amber-light);border-radius:var(--radius);padding:12px;">
+                <div style="font-size:11px;font-weight:600;color:var(--amber-text);text-transform:uppercase;margin-bottom:6px;">Schedule Feasibility</div>
+                <div style="font-size:12px;color:var(--amber-text);">Prototype deliverable before end-sem exams. Team of 3 with incremental development model. Core features complete in 4–5 weeks.</div>
+                <div style="margin-top:8px;"><span class="badge badge-amber">Tight but feasible</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== DESIGN =================== -->
+      <div class="page" id="page-design">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.25rem;">
+          <div class="card">
+            <div class="section-hd"><h2>System Architecture (Module 3)</h2></div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+              <div style="background:var(--blue-light);border-radius:var(--radius);padding:10px;text-align:center;font-size:13px;font-weight:500;color:var(--blue-text);">Presentation Layer — HTML/CSS/JS Frontend</div>
+              <div style="text-align:center;font-size:16px;color:var(--text2);">↕</div>
+              <div style="background:var(--amber-light);border-radius:var(--radius);padding:10px;text-align:center;font-size:13px;font-weight:500;color:var(--amber-text);">Application Layer — Business Logic / REST API</div>
+              <div style="text-align:center;font-size:16px;color:var(--text2);">↕</div>
+              <div style="background:var(--green-light);border-radius:var(--radius);padding:10px;text-align:center;font-size:13px;font-weight:500;color:var(--green-text);">Data Layer — Database (SQLite / Firebase)</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-hd"><h2>Design Principles Applied</h2></div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;font-size:12px;">
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--blue);font-size:14px;">▸</span><div><strong>Modular Design</strong> — Each module (auth, kanban, COCOMO, testing) is a self-contained component with its own logic and UI.</div></div>
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--blue);font-size:14px;">▸</span><div><strong>Information Hiding</strong> — Internal module logic is encapsulated; only public interfaces are exposed.</div></div>
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--blue);font-size:14px;">▸</span><div><strong>Abstraction</strong> — COCOMO logic is abstracted behind a clean input/output interface.</div></div>
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--blue);font-size:14px;">▸</span><div><strong>UI Design</strong> — Consistent design language with accessible colors and responsive layout.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-hd"><h2>Software Configuration Items (SCM — Module 3)</h2></div>
+          <div class="table-wrap" style="margin-top:8px;border:none;">
+            <table>
+              <thead><tr><th>CI ID</th><th>Item</th><th>Type</th><th>Version</th><th>Owner</th></tr></thead>
+              <tbody>
+                <tr><td>SCI-01</td><td>index.html — Main application entry</td><td>Source Code</td><td>v1.0</td><td>Member 1</td></tr>
+                <tr><td>SCI-02</td><td>kanban.js — Task board logic</td><td>Source Code</td><td>v1.2</td><td>Member 2</td></tr>
+                <tr><td>SCI-03</td><td>cocomo.js — Estimation engine</td><td>Source Code</td><td>v1.1</td><td>Member 3</td></tr>
+                <tr><td>SCI-04</td><td>requirements.json — Requirements data</td><td>Data</td><td>v1.0</td><td>Member 1</td></tr>
+                <tr><td>SCI-05</td><td>SRS Document — Software Requirements Spec</td><td>Document</td><td>v0.9</td><td>All</td></tr>
+                <tr><td>SCI-06</td><td>Test Plan — Test cases and results</td><td>Document</td><td>v0.5</td><td>Member 2</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== COCOMO =================== -->
+      <div class="page" id="page-cocomo">
+        <div class="card" style="margin-bottom:1.25rem;">
+          <div class="section-hd"><h2>COCOMO Basic Model — Software Cost Estimation (Module 5)</h2></div>
+          <div class="cocomo-inputs">
+            <div class="form-group">
+              <label>Project Size (KLOC)</label>
+              <input type="number" id="kloc" value="5" min="1" max="500" oninput="calcCocomo()">
+              <span style="font-size:11px;color:var(--text2);">Thousands of lines of code</span>
+            </div>
+            <div class="form-group">
+              <label>Project Type</label>
+              <select id="ptype" onchange="calcCocomo()">
+                <option value="organic">Organic — small team, simple project</option>
+                <option value="semidetached">Semi-detached — mixed experience</option>
+                <option value="embedded">Embedded — complex constraints</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Team Size</label>
+              <input type="number" id="tsize" value="3" min="1" max="50" oninput="calcCocomo()">
+              <span style="font-size:11px;color:var(--text2);">Number of developers</span>
+            </div>
+          </div>
+          <div class="cocomo-results">
+            <div class="cres">
+              <div class="cres-label">Effort</div>
+              <div class="cres-val" id="c-effort">—</div>
+              <div class="cres-unit">person-months</div>
+            </div>
+            <div class="cres">
+              <div class="cres-label">Duration</div>
+              <div class="cres-val" id="c-duration">—</div>
+              <div class="cres-unit">months</div>
+            </div>
+            <div class="cres">
+              <div class="cres-label">Avg Team Size</div>
+              <div class="cres-val" id="c-staffing">—</div>
+              <div class="cres-unit">developers needed</div>
+            </div>
+          </div>
+          <div class="formula-note">
+            <strong>Formulas used:</strong> Effort E = a × (KLOC)<sup>b</sup> | Duration T = c × E<sup>d</sup> | Staffing = E ÷ T
+            <br>Organic: a=2.4, b=1.05, c=2.5, d=0.38 &nbsp;|&nbsp; Semi-detached: a=3.0, b=1.12, c=2.5, d=0.35 &nbsp;|&nbsp; Embedded: a=3.6, b=1.20, c=2.5, d=0.32
+          </div>
+          <div style="margin-top:12px;">
+            <button class="btn btn-primary btn-sm" onclick="saveCocomoEstimate()">Save Estimate</button>
+            <span class="login-error" id="cocomoMsg" style="display:inline;margin-left:8px;"></span>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.25rem;">
+          <div class="section-hd"><h2>Saved Estimates</h2></div>
+          <div class="table-wrap" style="margin-top:8px;border:none;">
+            <table>
+              <thead><tr><th>Date</th><th>KLOC</th><th>Type</th><th>Team</th><th>Effort</th><th>Duration</th><th>Staffing</th></tr></thead>
+              <tbody id="tbody-cocomo-history">
+                <tr><td colspan="7" class="loading-text">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-hd"><h2>Delphi Method — Expert Estimation (Module 5)</h2></div>
+          <div class="table-wrap" style="margin-top:8px;border:none;">
+            <table>
+              <thead><tr><th>Expert (Member)</th><th>Optimistic (weeks)</th><th>Most Likely (weeks)</th><th>Pessimistic (weeks)</th><th>PERT Estimate</th></tr></thead>
+              <tbody>
+                <tr><td>Member 1</td><td>4</td><td>6</td><td>10</td><td id="pert1">—</td></tr>
+                <tr><td>Member 2</td><td>5</td><td>7</td><td>12</td><td id="pert2">—</td></tr>
+                <tr><td>Member 3</td><td>4</td><td>6</td><td>9</td><td id="pert3">—</td></tr>
+                <tr style="font-weight:600;"><td>Consensus</td><td>—</td><td>—</td><td>—</td><td id="pert-avg">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:8px;">PERT formula: (O + 4M + P) / 6</div>
+        </div>
+      </div>
+
+      <!-- =================== TESTING =================== -->
+      <div class="page" id="page-testing">
+        <div class="metrics-grid" style="grid-template-columns:repeat(4,1fr);">
+          <div class="metric-card"><div class="metric-label">Total Test Cases</div><div class="metric-val">10</div></div>
+          <div class="metric-card"><div class="metric-label">Passed</div><div class="metric-val" style="color:var(--green);">6</div></div>
+          <div class="metric-card"><div class="metric-label">Pending</div><div class="metric-val" style="color:var(--amber);">3</div></div>
+          <div class="metric-card"><div class="metric-label">Failed</div><div class="metric-val" style="color:var(--red);">1</div></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Test ID</th><th>Test Case Description</th><th>Testing Level</th><th>Technique</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td>TC-01</td><td>Valid user login with correct credentials</td><td>Unit Testing</td><td>Black Box</td><td><span class="test-pass">✓ Pass</span></td></tr>
+              <tr><td>TC-02</td><td>Login rejected for invalid credentials</td><td>Unit Testing</td><td>Boundary Value</td><td><span class="test-pass">✓ Pass</span></td></tr>
+              <tr><td>TC-03</td><td>Create a new project with all required fields</td><td>Integration Testing</td><td>Black Box</td><td><span class="test-pass">✓ Pass</span></td></tr>
+              <tr><td>TC-04</td><td>Kanban task moves between columns correctly</td><td>Integration Testing</td><td>Black Box</td><td><span class="test-pending">⟳ Pending</span></td></tr>
+              <tr><td>TC-05</td><td>COCOMO output matches manual calculation</td><td>Unit Testing</td><td>White Box</td><td><span class="test-pass">✓ Pass</span></td></tr>
+              <tr><td>TC-06</td><td>Requirements CRUD operations work correctly</td><td>System Testing</td><td>Black Box</td><td><span class="test-pass">✓ Pass</span></td></tr>
+              <tr><td>TC-07</td><td>Role-based access: tester cannot edit admin data</td><td>Validation Testing</td><td>Black Box</td><td><span class="test-pending">⟳ Pending</span></td></tr>
+              <tr><td>TC-08</td><td>End-to-end project creation to task completion</td><td>System Testing</td><td>Structural</td><td><span class="test-fail">✗ Fail</span></td></tr>
+              <tr><td>TC-09</td><td>Regression test after adding COCOMO module</td><td>Regression Testing</td><td>Regression</td><td><span class="test-pass">✓ Pass</span></td></tr>
+              <tr><td>TC-10</td><td>System performance with 50 concurrent users</td><td>System Testing</td><td>Load Testing</td><td><span class="test-pending">⟳ Pending</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:1rem;" class="card">
+          <div class="section-hd"><h2>Quality Assurance Checklist (Module 4)</h2></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-size:12px;" id="qa-checklist"></div>
+        </div>
+      </div>
+
+      <!-- =================== TEAM =================== -->
+      <div class="page" id="page-team">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;" id="team-cards"></div>
+        <div class="card" style="margin-top:14px;">
+          <div class="section-hd"><h2>Project Info</h2></div>
+          <table style="margin-top:8px;font-size:13px;">
+            <tr><td style="color:var(--text2);padding:5px 0;width:180px;">Course Code</td><td>CSE181600E11</td></tr>
+            <tr><td style="color:var(--text2);padding:5px 0;">Course Title</td><td>Software Engineering</td></tr>
+            <tr><td style="color:var(--text2);padding:5px 0;">Credits</td><td>3 (3-0-0)</td></tr>
+            <tr><td style="color:var(--text2);padding:5px 0;">Project Title</td><td>Software Project Management Tool</td></tr>
+            <tr><td style="color:var(--text2);padding:5px 0;">Instructor</td><td>Rup Jyoti Sir</td></tr>
+            <tr><td style="color:var(--text2);padding:5px 0;">Submission</td><td>Before 6th Sem End Semester Exams</td></tr>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ADD TASK MODAL -->
+<div class="modal-overlay" id="addTaskModal">
+  <div class="modal">
+    <h2>Add New Task</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="form-group">
+        <label>Task Title</label>
+        <input type="text" id="new-task-title" placeholder="e.g. Implement login page">
+      </div>
+      <div class="form-group">
+        <label>Module / Description</label>
+        <select id="new-task-mod">
+          <option value="Module 1 — SDLC">Module 1 — SDLC</option>
+          <option value="Module 2 — Requirements">Module 2 — Requirements</option>
+          <option value="Module 3 — Design">Module 3 — Design</option>
+          <option value="Module 4 — Testing">Module 4 — Testing</option>
+          <option value="Module 5 — Project Mgmt">Module 5 — Project Mgmt</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="new-task-priority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="new-task-status">
+          <option value="todo" selected>To Do</option>
+          <option value="in-progress">In Progress</option>
+          <option value="review">Review</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Assigned To</label>
+        <input type="text" id="new-task-member" placeholder="e.g. Ranil">
+      </div>
+    </div>
+    <div class="login-error" id="taskMsg"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="document.getElementById('addTaskModal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-primary" onclick="addTask()">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD REQUIREMENT MODAL -->
+<div class="modal-overlay" id="addReqModal">
+  <div class="modal">
+    <h2>Add Requirement</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="new-req-type">
+          <option value="functional">Functional</option>
+          <option value="non_functional">Non-Functional</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="new-req-title" placeholder="e.g. User registration and login">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <input type="text" id="new-req-desc" placeholder="optional details">
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="new-req-priority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="new-req-status">
+          <option value="draft">Draft</option>
+          <option value="todo">To Do</option>
+          <option value="in_progress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+    </div>
+    <div class="login-error" id="reqMsg"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="document.getElementById('addReqModal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-primary" onclick="addRequirement()">Add Requirement</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     Main application script.
+     Wrapped in 'appConfigReady' listener so it only runs AFTER the
+     Firebase module script above has finished and set window.__APP_CONFIG__.
+════════════════════════════════════════════════════════════════════ -->
+<script>
+window.addEventListener('appConfigReady', function () {
+(function () {
+
+  // ── Config (safely available now) ──────────────────────────────────────────
+  const { API_BASE, PROJECT_ID } = window.__APP_CONFIG__;
+
+  let currentUser = null;
+  let idToken     = null;
+  let authMode    = 'signin';
+
+  const modColors = {
+    mod1:{bg:'#E6F1FB',color:'#0C447C',label:'M1'},
+    mod2:{bg:'#EAF3DE',color:'#27500A',label:'M2'},
+    mod3:{bg:'#FAEEDA',color:'#633806',label:'M3'},
+    mod4:{bg:'#FCEBEB',color:'#791F1F',label:'M4'},
+    mod5:{bg:'#EEEDFE',color:'#3C3489',label:'M5'}
+  };
+
+  const STATUS_LABELS = { 'todo':'To Do', 'in-progress':'In Progress', 'review':'Review', 'done':'Done' };
+  const STATUS_ORDER  = ['todo','in-progress','review','done'];
+
+  const teamMembers = [
+    {name:'Ranil',  roll:'230710007045', av:'A', role:'Frontend & Requirements'},
+    {name:'Soumik', roll:'230710007060', av:'B', role:'Backend & Architecture'},
+    {name:'Pal',    roll:'230710007037', av:'C', role:'Testing & COCOMO'},
+  ];
+  const avColors = {
+    A:{bg:'#B5D4F4',color:'#185FA5'},
+    B:{bg:'#9FE1CB',color:'#0F6E56'},
+    C:{bg:'#F4C0D1',color:'#993556'}
+  };
+
+  const moduleData = [
+    {label:'Module 1 — SDLC & Process',    done:4, total:6,  color:'#378ADD'},
+    {label:'Module 2 — Requirements',       done:4, total:6,  color:'#639922'},
+    {label:'Module 3 — Design',             done:2, total:5,  color:'#EF9F27'},
+    {label:'Module 4 — Testing',            done:1, total:4,  color:'#E24B4A'},
+    {label:'Module 5 — Project Mgmt',       done:1, total:3,  color:'#7F77DD'},
+  ];
+
+  const qaItems = [
+    {text:'Code reviews conducted for each module',     done:true},
+    {text:'Unit tests written for all functions',       done:false},
+    {text:'SRS document reviewed and updated',          done:true},
+    {text:'UI tested across browsers',                  done:false},
+    {text:'COCOMO output verified manually',            done:true},
+    {text:'Security review for login module',           done:false},
+    {text:'Performance benchmarks measured',            done:false},
+    {text:'All requirements traced to test cases',      done:true},
+  ];
+
+  // ── API helper ──────────────────────────────────────────────────────────────
+  async function api(path, options = {}) {
+    const headers = Object.assign(
+      { 'Content-Type': 'application/json' },
+      options.headers || {}
+    );
+    if (idToken) headers['Authorization'] = 'Bearer ' + idToken;
+
+    const res = await fetch(API_BASE + path, Object.assign({}, options, { headers }));
+    let body = null;
+    try { body = await res.json(); } catch (e) { /* no body */ }
+
+    if (!res.ok) {
+      const msg = (body && body.message) || `Request failed (${res.status})`;
+      throw new Error(msg);
+    }
+    return body;
+  }
+
+  // ── Auth ────────────────────────────────────────────────────────────────────
+  function setAuthMode(mode) {
+    authMode = mode;
+    document.getElementById('tabSignin').classList.toggle('active', mode === 'signin');
+    document.getElementById('tabSignup').classList.toggle('active', mode === 'signup');
+    document.getElementById('groupName').style.display = mode === 'signup' ? '' : 'none';
+    document.getElementById('groupRoll').style.display = mode === 'signup' ? '' : 'none';
+    document.getElementById('authSubmitBtn').textContent = mode === 'signup' ? 'Sign Up' : 'Sign In';
+    document.getElementById('authError').textContent = '';
+  }
+
+  async function submitAuth() {
+    const email    = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const errEl    = document.getElementById('authError');
+    errEl.textContent = '';
+
+    if (!email || !password) {
+      errEl.textContent = 'Email and password are required.';
+      return;
+    }
+
+    const { signInWithEmailAndPassword, createUserWithEmailAndPassword } = window.__fbAuthFns__;
+    const fbAuth = window.__fbAuth__;
+
+    try {
+      let cred;
+      if (authMode === 'signup') {
+        cred = await createUserWithEmailAndPassword(fbAuth, email, password);
+        const displayName = document.getElementById('auth-name').value.trim();
+        const roll        = document.getElementById('auth-roll').value.trim();
+        const token = await cred.user.getIdToken();
+        await fetch(API_BASE + '/auth/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ displayName, roll })
+        });
+      } else {
+        cred = await signInWithEmailAndPassword(fbAuth, email, password);
+      }
+      // onAuthStateChanged handles the rest
+    } catch (err) {
+      errEl.textContent = err.message.replace('Firebase: ', '');
+    }
+  }
+
+  function logout() {
+    const { signOut } = window.__fbAuthFns__;
+    signOut(window.__fbAuth__);
+  }
+
+  // React to auth state changes
+  window.__fbAuthFns__.onAuthStateChanged(window.__fbAuth__, async (user) => {
+    if (user) {
+      currentUser = user;
+      try { idToken = await user.getIdToken(); } catch (e) { idToken = null; }
+      document.getElementById('loginOverlay').classList.add('hidden');
+      document.getElementById('appRoot').classList.remove('hidden');
+      document.getElementById('topbarUser').textContent = user.email || '';
+      await loadAll();
+    } else {
+      currentUser = null;
+      idToken = null;
+      document.getElementById('loginOverlay').classList.remove('hidden');
+      document.getElementById('appRoot').classList.add('hidden');
+    }
+  });
+
+  // ── Page navigation ─────────────────────────────────────────────────────────
+  function showPage(id, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function showReqTab(tab, el) {
+    ['functional','nonfunctional','feasibility'].forEach(t => {
+      document.getElementById('req-'+t).style.display = t === tab ? 'block' : 'none';
+    });
+    document.querySelectorAll('.tab-bar .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── Load everything once authenticated ──────────────────────────────────────
+  async function loadAll() {
+    const conn = document.getElementById('connStatus');
+    conn.textContent = 'Loading…';
+    conn.className = 'badge badge-amber';
+
+    try {
+      await Promise.all([
+        loadDashboard(),
+        loadKanban(),
+        loadRequirements(),
+        loadCocomoHistory(),
+      ]);
+      conn.textContent = 'Connected';
+      conn.className = 'badge badge-green';
+    } catch (err) {
+      conn.textContent = 'API error';
+      conn.className = 'badge badge-red';
+      console.error(err);
+    }
+
+    buildModuleProgress();
+    buildTeam();
+    buildQAChecklist();
+    calcDays();
+    calcCocomo();
+  }
+
+  // ── Dashboard ───────────────────────────────────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const metricsRes = await api('/dashboard/metrics');
+      const m = metricsRes.data;
+      document.getElementById('m-total').textContent = m.totalTasks;
+      document.getElementById('m-done').textContent  = m.completedTasks;
+      document.getElementById('m-pct').textContent   = m.progressPercent + '% done';
+    } catch (err) {
+      document.getElementById('m-total').textContent = '—';
+      document.getElementById('m-done').textContent  = '—';
+      document.getElementById('m-pct').textContent   = 'Error loading';
+    }
+
+    try {
+      const activityRes = await api('/dashboard/activity');
+      buildActivity(activityRes.data || []);
+    } catch (err) {
+      document.getElementById('activity-feed').innerHTML =
+        `<div class="error-text">Failed to load activity feed.</div>`;
+    }
+  }
+
+  function buildActivity(activities) {
+    const el = document.getElementById('activity-feed');
+    if (!activities.length) {
+      el.innerHTML = `<div class="loading-text">No recent activity.</div>`;
+      return;
+    }
+    el.innerHTML = activities.map(a => {
+      const time = a.timestamp && a.timestamp._seconds
+        ? new Date(a.timestamp._seconds * 1000).toLocaleString()
+        : '—';
+      return `<div class="activity-item">
+        <div class="activity-dot" style="background:#378ADD;"></div>
+        <div class="activity-text">${escapeHtml(a.message || a.type || '')}</div>
+        <div class="activity-time">${time}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function buildModuleProgress() {
+    const el = document.getElementById('module-progress');
+    el.innerHTML = moduleData.map(m => {
+      const pct = Math.round((m.done / m.total) * 100);
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+          <span style="color:var(--text2);">${m.label}</span>
+          <span style="font-weight:600;">${m.done}/${m.total}</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" style="width:${pct}%;background:${m.color};"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function calcDays() {
+    const now    = new Date();
+    const target = new Date('2026-06-10');
+    const diff   = Math.max(0, Math.round((target - now) / (1000*60*60*24)));
+    document.getElementById('m-days').textContent = diff;
+  }
+
+  // ── Kanban ──────────────────────────────────────────────────────────────────
+  let kanbanTasks = [];
+
+  async function loadKanban() {
+    const board = document.getElementById('kanban-board');
+    board.innerHTML = `<div class="loading-text">Loading tasks…</div>`;
+    try {
+      const res = await api('/kanban/tasks?projectId=' + encodeURIComponent(PROJECT_ID));
+      kanbanTasks = res.data || [];
+      buildKanban();
+    } catch (err) {
+      board.innerHTML = `<div class="error-text">Failed to load tasks: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  function buildKanban() {
+    const board = document.getElementById('kanban-board');
+    board.innerHTML = '';
+    STATUS_ORDER.forEach(status => {
+      const cards = kanbanTasks.filter(t => t.status === status);
+      const el = document.createElement('div');
+      el.className = 'kanban-col';
+      el.innerHTML = `<div class="kanban-col-head">
+          <span class="kanban-col-title">${STATUS_LABELS[status]}</span>
+          <span class="kanban-count">${cards.length}</span>
+        </div>` +
+        cards.map(c => {
+          const av = c.assigneeName ? c.assigneeName.charAt(0).toUpperCase() : '?';
+          return `<div class="task-card">
+            <div class="task-card-title">${escapeHtml(c.title)}</div>
+            ${c.description ? `<div style="font-size:11px;color:var(--text2);margin-bottom:6px;">${escapeHtml(c.description)}</div>` : ''}
+            <div class="task-card-meta">
+              <select class="btn btn-sm" style="padding:2px 6px;font-size:11px;" onchange="moveTask('${c.id}', this.value)">
+                ${STATUS_ORDER.map(s => `<option value="${s}" ${s===status?'selected':''}>${STATUS_LABELS[s]}</option>`).join('')}
+              </select>
+              <div style="display:flex;align-items:center;gap:6px;">
+                ${c.assigneeName ? `<div class="avatar-xs" style="background:var(--surface2);color:var(--text2);">${escapeHtml(av)}</div>` : ''}
+                <span style="cursor:pointer;color:var(--red);font-size:13px;" title="Delete task" onclick="deleteTask('${c.id}')">✕</span>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      board.appendChild(el);
+    });
+  }
+
+  async function moveTask(id, newStatus) {
+    try {
+      await api('/kanban/tasks/' + id, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
+      const t = kanbanTasks.find(t => t.id === id);
+      if (t) t.status = newStatus;
+      buildKanban();
+      await loadDashboard();
+    } catch (err) {
+      alert('Failed to update task: ' + err.message);
+      loadKanban();
+    }
+  }
+
+  async function deleteTask(id) {
+    if (!confirm('Delete this task?')) return;
+    try {
+      await api('/kanban/tasks/' + id, { method: 'DELETE' });
+      kanbanTasks = kanbanTasks.filter(t => t.id !== id);
+      buildKanban();
+      await loadDashboard();
+    } catch (err) {
+      alert('Failed to delete task: ' + err.message);
+    }
+  }
+
+  async function addTask() {
+    const title    = document.getElementById('new-task-title').value.trim();
+    const mod      = document.getElementById('new-task-mod').value;
+    const priority = document.getElementById('new-task-priority').value;
+    const status   = document.getElementById('new-task-status').value;
+    const assignee = document.getElementById('new-task-member').value.trim();
+    const msgEl    = document.getElementById('taskMsg');
+    msgEl.textContent = '';
+
+    if (!title) { msgEl.textContent = 'Title is required.'; return; }
+
+    try {
+      const res = await api('/kanban/tasks', {
+        method: 'POST',
+        headers: { 'x-project-id': PROJECT_ID },
+        body: JSON.stringify({
+          title, description: mod, status, priority,
+          assigneeName: assignee || null,
+          assigneeId:   assignee || null,
+          projectId:    PROJECT_ID
+        })
+      });
+      kanbanTasks.push(res.data);
+      buildKanban();
+      document.getElementById('new-task-title').value  = '';
+      document.getElementById('new-task-member').value = '';
+      document.getElementById('addTaskModal').classList.remove('open');
+      await loadDashboard();
+    } catch (err) {
+      msgEl.textContent = err.message;
+    }
+  }
+
+  // ── Requirements ────────────────────────────────────────────────────────────
+  let requirementsData = [];
+
+  async function loadRequirements() {
+    const fnBody = document.getElementById('tbody-functional');
+    const nfBody = document.getElementById('tbody-nonfunctional');
+    fnBody.innerHTML = nfBody.innerHTML = `<tr><td colspan="5" class="loading-text">Loading…</td></tr>`;
+
+    try {
+      const res = await api('/requirements/' + encodeURIComponent(PROJECT_ID));
+      requirementsData = res.data || [];
+      buildRequirements();
+    } catch (err) {
+      const errRow = `<tr><td colspan="5" class="error-text">Failed to load: ${escapeHtml(err.message)}</td></tr>`;
+      fnBody.innerHTML = errRow;
+      nfBody.innerHTML = errRow;
+    }
+  }
+
+  const STATUS_BADGE = {
+    draft:'badge-blue', todo:'badge-blue', in_progress:'badge-amber',
+    done:'badge-green', approved:'badge-green', rejected:'badge-red'
+  };
+  const STATUS_TEXT = {
+    draft:'Draft', todo:'To Do', in_progress:'In Progress',
+    done:'Done',  approved:'Approved', rejected:'Rejected'
+  };
+
+  function buildRequirements() {
+    const fnBody = document.getElementById('tbody-functional');
+    const nfBody = document.getElementById('tbody-nonfunctional');
+
+    const renderRow = (r, prefix, idx) => {
+      const badgeClass = STATUS_BADGE[r.status] || 'badge-blue';
+      const statusText = STATUS_TEXT[r.status]  || r.status;
+      return `<tr>
+        <td>${prefix}-${String(idx+1).padStart(2,'0')}</td>
+        <td>${escapeHtml(r.title)}${r.description ? `<div style="font-size:11px;color:var(--text2);margin-top:2px;">${escapeHtml(r.description)}</div>` : ''}</td>
+        <td>${(r.priority||'medium').charAt(0).toUpperCase()+(r.priority||'medium').slice(1)}</td>
+        <td><span class="badge ${badgeClass}">${statusText}</span></td>
+        <td><span style="cursor:pointer;color:var(--red);" title="Delete" onclick="deleteRequirement('${r.id}')">✕</span></td>
+      </tr>`;
+    };
+
+    const functional    = requirementsData.filter(r => r.type === 'functional');
+    const nonFunctional = requirementsData.filter(r => r.type === 'non_functional');
+
+    fnBody.innerHTML = functional.length
+      ? functional.map((r,i) => renderRow(r,'FR',i)).join('')
+      : `<tr><td colspan="5" class="loading-text">No functional requirements yet.</td></tr>`;
+
+    nfBody.innerHTML = nonFunctional.length
+      ? nonFunctional.map((r,i) => renderRow(r,'NF',i)).join('')
+      : `<tr><td colspan="5" class="loading-text">No non-functional requirements yet.</td></tr>`;
+  }
+
+  function openAddRequirement() {
+    document.getElementById('reqMsg').textContent = '';
+    document.getElementById('addReqModal').classList.add('open');
+  }
+
+  async function addRequirement() {
+    const type        = document.getElementById('new-req-type').value;
+    const title       = document.getElementById('new-req-title').value.trim();
+    const description = document.getElementById('new-req-desc').value.trim();
+    const priority    = document.getElementById('new-req-priority').value;
+    const status      = document.getElementById('new-req-status').value;
+    const msgEl       = document.getElementById('reqMsg');
+    msgEl.textContent = '';
+
+    if (!title) { msgEl.textContent = 'Title is required.'; return; }
+
+    try {
+      const res = await api('/requirements/' + encodeURIComponent(PROJECT_ID), {
+        method: 'POST',
+        body: JSON.stringify({ type, title, description, priority, status })
+      });
+      requirementsData.push(res.data);
+      buildRequirements();
+      document.getElementById('new-req-title').value = '';
+      document.getElementById('new-req-desc').value  = '';
+      document.getElementById('addReqModal').classList.remove('open');
+    } catch (err) {
+      msgEl.textContent = err.message;
+    }
+  }
+
+  async function deleteRequirement(id) {
+    if (!confirm('Delete this requirement?')) return;
+    try {
+      await api('/requirements/' + encodeURIComponent(PROJECT_ID) + '/' + id, { method: 'DELETE' });
+      requirementsData = requirementsData.filter(r => r.id !== id);
+      buildRequirements();
+    } catch (err) {
+      alert('Failed to delete: ' + err.message);
+    }
+  }
+
+  // ── COCOMO ──────────────────────────────────────────────────────────────────
+  function calcCocomo() {
+    const kloc = parseFloat(document.getElementById('kloc').value) || 1;
+    const type = document.getElementById('ptype').value;
+    const params = {
+      organic:      [2.4, 1.05, 2.5, 0.38],
+      semidetached: [3.0, 1.12, 2.5, 0.35],
+      embedded:     [3.6, 1.20, 2.5, 0.32]
+    };
+    const [a,b,c,d] = params[type];
+    const effort   = a * Math.pow(kloc, b);
+    const duration = c * Math.pow(effort, d);
+    const staffing = effort / duration;
+    document.getElementById('c-effort').textContent   = effort.toFixed(1);
+    document.getElementById('c-duration').textContent = duration.toFixed(1);
+    document.getElementById('c-staffing').textContent = staffing.toFixed(1);
+    document.getElementById('m-effort').textContent   = effort.toFixed(1);
+
+    const pertData = [[4,6,10],[5,7,12],[4,6,9]];
+    let total = 0;
+    pertData.forEach((p,i) => {
+      const pert = (p[0] + 4*p[1] + p[2]) / 6;
+      document.getElementById('pert'+(i+1)).textContent = pert.toFixed(1) + ' wks';
+      total += pert;
+    });
+    document.getElementById('pert-avg').textContent = (total/3).toFixed(1) + ' wks';
+  }
+
+  async function saveCocomoEstimate() {
+    const kloc        = document.getElementById('kloc').value;
+    const projectType = document.getElementById('ptype').value;
+    const teamSize    = document.getElementById('tsize').value;
+    const msgEl       = document.getElementById('cocomoMsg');
+    msgEl.textContent = '';
+
+    try {
+      const res = await api('/cocomo/estimate', {
+        method: 'POST',
+        body: JSON.stringify({ kloc, projectType, teamSize, projectId: PROJECT_ID })
+      });
+      msgEl.style.color = 'var(--green)';
+      msgEl.textContent = 'Saved!';
+      await loadCocomoHistory();
+      document.getElementById('m-effort').textContent = res.data.effort.toFixed(1);
+    } catch (err) {
+      msgEl.style.color = 'var(--red)';
+      msgEl.textContent = err.message;
+    }
+  }
+
+  async function loadCocomoHistory() {
+    const tbody = document.getElementById('tbody-cocomo-history');
+    try {
+      const res  = await api('/cocomo/history?projectId=' + encodeURIComponent(PROJECT_ID));
+      const data = res.data || [];
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="loading-text">No saved estimates yet.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = data.map(e => {
+        const date = e.createdAt && e.createdAt._seconds
+          ? new Date(e.createdAt._seconds * 1000).toLocaleDateString()
+          : '—';
+        return `<tr>
+          <td>${date}</td><td>${e.kloc}</td><td>${e.projectType}</td>
+          <td>${e.teamSize}</td><td>${e.effort}</td>
+          <td>${e.duration}</td><td>${e.staffing}</td>
+        </tr>`;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="7" class="error-text">Failed to load history: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  // ── Team & QA (static) ──────────────────────────────────────────────────────
+  function buildTeam() {
+    const el = document.getElementById('team-cards');
+    el.innerHTML = teamMembers.map(m => {
+      const av = avColors[m.av];
+      return `<div class="card" style="text-align:center;">
+        <div style="width:52px;height:52px;border-radius:50%;background:${av.bg};color:${av.color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;margin:0 auto 10px;">${m.av}</div>
+        <div style="font-size:15px;font-weight:600;">${m.name}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px;">${m.roll}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:6px;padding:4px 8px;background:var(--surface2);border-radius:20px;display:inline-block;">${m.role}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function buildQAChecklist() {
+    const el = document.getElementById('qa-checklist');
+    el.innerHTML = qaItems.map(q => `<div style="display:flex;align-items:flex-start;gap:6px;padding:6px 8px;background:${q.done ? 'var(--green-light)' : 'var(--surface2)'};border-radius:6px;">
+      <span style="color:${q.done ? 'var(--green)' : 'var(--text2)'};font-size:13px;">${q.done ? '✓' : '○'}</span>
+      <span style="color:${q.done ? 'var(--green-text)' : 'var(--text2)'};">${q.text}</span>
+    </div>`).join('');
+  }
+
+  // ── Utils ────────────────────────────────────────────────────────────────────
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // ── Expose to inline onclick handlers ───────────────────────────────────────
+  window.setAuthMode        = setAuthMode;
+  window.submitAuth         = submitAuth;
+  window.logout             = logout;
+  window.showPage           = showPage;
+  window.showReqTab         = showReqTab;
+  window.moveTask           = moveTask;
+  window.deleteTask         = deleteTask;
+  window.addTask            = addTask;
+  window.openAddRequirement = openAddRequirement;
+  window.addRequirement     = addRequirement;
+  window.deleteRequirement  = deleteRequirement;
+  window.calcCocomo         = calcCocomo;
+  window.saveCocomoEstimate = saveCocomoEstimate;
+
+})();
+}); // end appConfigReady
+</script>
+</body>
+</html>

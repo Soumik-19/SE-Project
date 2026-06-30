@@ -1,0 +1,172 @@
+<!--
+  requirements-html-snippet.html
+  ─────────────────────────────────────────────────────────────
+  Add this block inside your project detail page wherever the
+  "Requirements" section/tab is rendered. This is NOT a
+  standalone page — paste it into the existing tab-panel markup.
+  ─────────────────────────────────────────────────────────────
+-->
+
+<!-- In <head>: -->
+<!-- <link rel="stylesheet" href="/css/requirements.css"> -->
+
+<!-- In <body> — inside the Requirements tab panel: -->
+<div id="requirements-panel" class="tab-panel">
+
+  <!-- Tab switcher (Functional / Non-Functional / Feasibility) -->
+  <div class="req-tabs" role="tablist">
+    <button class="req-tab active" data-tab="functional" role="tab">
+      Functional
+    </button>
+    <button class="req-tab" data-tab="non_functional" role="tab">
+      Non-Functional
+    </button>
+    <button class="req-tab" data-tab="feasibility" role="tab">
+      Feasibility Study
+    </button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="req-toolbar">
+    <span class="req-toolbar__title" id="req-toolbar-label">Functional Requirements</span>
+    <button class="btn btn--primary" id="req-add-btn">Add Functional Requirement</button>
+  </div>
+
+  <!-- Inline error banner -->
+  <div id="req-error" role="alert"></div>
+
+  <!-- Loading indicator -->
+  <div id="req-loading">Loading…</div>
+
+  <!-- Dynamic list area (cards or table injected here by requirements.js) -->
+  <div id="req-list-container"></div>
+
+</div><!-- /requirements-panel -->
+
+
+<!-- ── Add / Edit Modal ──────────────────────────────────── -->
+<div id="req-modal" role="dialog" aria-modal="true" aria-labelledby="req-modal-title">
+  <div class="req-modal__box">
+
+    <div class="req-modal__header">
+      <h3 id="req-modal-title">Add Requirement</h3>
+      <button class="req-modal__close" aria-label="Close">&times;</button>
+    </div>
+
+    <form id="req-form" novalidate>
+      <div class="req-modal__body">
+
+        <!-- Form-level error -->
+        <div id="req-form-error" role="alert"></div>
+
+        <!-- Type (hidden when opened from a tab; editable in edit mode) -->
+        <div class="req-form-group">
+          <label for="req-form-type">Type</label>
+          <select id="req-form-type" name="type" required>
+            <option value="functional">Functional</option>
+            <option value="non_functional">Non-Functional</option>
+            <option value="feasibility">Feasibility</option>
+          </select>
+        </div>
+
+        <!-- Title -->
+        <div class="req-form-group">
+          <label for="req-form-title">Title <span aria-hidden="true">*</span></label>
+          <input
+            id="req-form-title"
+            name="title"
+            type="text"
+            placeholder="Requirement title"
+            required
+            maxlength="200"
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="req-form-group">
+          <label for="req-form-description">Description</label>
+          <textarea
+            id="req-form-description"
+            name="description"
+            placeholder="Describe the requirement…"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <!-- Priority + Status -->
+        <div class="req-form-row">
+          <div class="req-form-group">
+            <label for="req-form-priority">Priority</label>
+            <select id="req-form-priority" name="priority">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div class="req-form-group">
+            <label for="req-form-status">Status</label>
+            <select id="req-form-status" name="status">
+              <option value="draft" selected>Draft</option>
+              <option value="review">In Review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Feasibility-specific fields (shown only when type === "feasibility") -->
+        <div id="req-feasibility-fields">
+          <div class="req-form-row">
+            <div class="req-form-group">
+              <label for="req-form-feasibility-category">Category</label>
+              <select id="req-form-feasibility-category" name="feasibilityCategory">
+                <option value="technical">Technical</option>
+                <option value="operational">Operational</option>
+                <option value="financial">Financial</option>
+                <option value="schedule">Schedule</option>
+              </select>
+            </div>
+            <div class="req-form-group">
+              <label for="req-form-score">Score (1–5)</label>
+              <input
+                id="req-form-score"
+                name="score"
+                type="number"
+                min="1"
+                max="5"
+                step="0.5"
+                placeholder="e.g. 3.5"
+              />
+            </div>
+          </div>
+          <div class="req-form-group">
+            <label for="req-form-notes">Notes</label>
+            <textarea
+              id="req-form-notes"
+              name="notes"
+              placeholder="Additional feasibility notes…"
+              rows="2"
+            ></textarea>
+          </div>
+        </div>
+
+      </div><!-- /modal body -->
+
+      <div class="req-modal__footer">
+        <button type="button" class="btn btn--ghost" id="req-modal-cancel">Cancel</button>
+        <button type="submit" class="btn btn--primary" id="req-modal-submit">Add</button>
+      </div>
+    </form>
+
+  </div><!-- /modal box -->
+</div><!-- /req-modal -->
+
+
+<!--
+  At the bottom of the page (before </body>), after api.js:
+  <script src="/js/requirements.js"></script>
+  <script>
+    // Pass in projectId and currentUser from your page context:
+    Requirements.init(currentProjectId, currentUser);
+  </script>
+-->

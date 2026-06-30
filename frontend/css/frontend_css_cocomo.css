@@ -1,0 +1,300 @@
+/* frontend/css/cocomo.css
+   Scoped to .cocomo-* classes to avoid leaking into other modules.
+   Inherits all base variables (--primary, --surface, --text, etc.) from main.css.
+*/
+
+/* ─── Section Layout ──────────────────────────────────────────────────────── */
+.cocomo-section {
+  padding: 1.5rem;
+  max-width: 820px;
+}
+
+.cocomo-section h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a2e);
+}
+
+/* ─── Form Card ───────────────────────────────────────────────────────────── */
+.cocomo-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.cocomo-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary, #1a1a2e);
+}
+
+/* ─── Form Grid ───────────────────────────────────────────────────────────── */
+.cocomo-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.25rem;
+}
+
+@media (max-width: 560px) {
+  .cocomo-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cocomo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cocomo-field label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary, #64748b);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.cocomo-field input,
+.cocomo-field select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 6px;
+  font-size: 0.92rem;
+  color: var(--text-primary, #1a1a2e);
+  background: var(--input-bg, #f8fafc);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+
+.cocomo-field input:focus,
+.cocomo-field select:focus {
+  outline: none;
+  border-color: var(--primary, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.cocomo-field-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+/* Label field spans full width */
+.cocomo-field--full {
+  grid-column: 1 / -1;
+}
+
+/* ─── Action Row ──────────────────────────────────────────────────────────── */
+.cocomo-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.cocomo-loading-spinner {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #64748b);
+}
+
+.cocomo-loading-spinner.hidden {
+  display: none;
+}
+
+/* ─── Error Banner ────────────────────────────────────────────────────────── */
+.cocomo-error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  border-radius: 6px;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.cocomo-error.hidden {
+  display: none;
+}
+
+/* ─── Result Card ─────────────────────────────────────────────────────────── */
+.cocomo-result-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cocomo-result-card.hidden {
+  display: none;
+}
+
+.cocomo-result-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary, #1a1a2e);
+}
+
+.cocomo-result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 480px) {
+  .cocomo-result-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cocomo-metric {
+  background: var(--surface-alt, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  text-align: center;
+}
+
+.cocomo-metric__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+}
+
+.cocomo-metric__value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--primary, #6366f1);
+}
+
+/* ─── History Section ─────────────────────────────────────────────────────── */
+.cocomo-history-section {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.cocomo-history-section.hidden {
+  display: none;
+}
+
+.cocomo-history-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary, #1a1a2e);
+}
+
+.cocomo-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cocomo-history-empty {
+  font-size: 0.875rem;
+  color: var(--text-muted, #94a3b8);
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.cocomo-history-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-alt, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  transition: background 0.12s;
+}
+
+.cocomo-history-item:hover {
+  background: var(--hover-bg, #f1f5f9);
+}
+
+.cocomo-history-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.cocomo-history-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a2e);
+}
+
+.cocomo-history-date {
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+.cocomo-history-values {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #64748b);
+  flex-shrink: 0;
+}
+
+.cocomo-history-values strong {
+  color: var(--text-primary, #1a1a2e);
+}
+
+/* ─── Project Type Badges ─────────────────────────────────────────────────── */
+.badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+
+.badge--organic {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge--semidetached {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.badge--embedded {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+/* ─── Delete Button ───────────────────────────────────────────────────────── */
+.cocomo-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #94a3b8);
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+
+.cocomo-delete-btn:hover {
+  color: #dc2626;
+  background: #fef2f2;
+}
